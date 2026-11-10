@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>California House Price Predictor</title>
+  <style>
+:root {
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --text: #1c2430;
+  --muted: #5d6879;
+  --line: #dfe3ea;
+  --accent: #2f6fed;
+  --accent-text: #ffffff;
+  --danger: #b3261e;
+  --danger-bg: #fdecea;
+  --soft: #eef3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161d;
+    --card: #1b212b;
+    --text: #e8ecf2;
+    --muted: #9aa5b6;
+    --line: #2c3544;
+    --accent: #6c9bff;
+    --accent-text: #0d1320;
+    --danger: #ff8a80;
+    --danger-bg: #3a1f1d;
+    --soft: #212c44;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 56px;
+}
+
+.hero { margin-bottom: 24px; }
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+h1 { margin: 0 0 8px; font-size: clamp(26px, 4vw, 36px); line-height: 1.2; }
+.lead { margin: 0; color: var(--muted); max-width: 60ch; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+}
+.card h2 { margin: 0 0 14px; font-size: 18px; }
+
+fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.field { display: block; margin-bottom: 12px; }
+.field > span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.field output { font-weight: 600; color: var(--accent); }
+.field small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+input[type="number"], select {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+input:focus-visible, select:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input.invalid { border-color: var(--danger); }
+
+.actions { display: flex; gap: 10px; margin-top: 6px; }
+.btn {
+  padding: 11px 18px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+.btn.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  flex: 1;
+}
+.btn:disabled { opacity: .6; cursor: progress; }
+
+.error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.result { position: sticky; top: 16px; }
+.empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--soft);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.empty p { margin: 0; }
+
+#output {
+  padding: 20px 12px;
+  text-align: center;
+  background: var(--soft);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.price { margin: 0; font-size: clamp(34px, 6vw, 46px); font-weight: 700; color: var(--accent); }
+.range { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 14px; }
+.stats div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.stats dt { font-size: 12px; color: var(--muted); }
+.stats dd { margin: 2px 0 0; font-weight: 600; }
+
+.note { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+
+@media (max-width: 800px) {
+  .grid { grid-template-columns: 1fr; }
+  .result { position: static; }
+}
+@media (max-width: 420px) {
+  .row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">Machine learning project</p>
+      <h1>California House Price Predictor</h1>
+      <p class="lead">Describe a district and a Random Forest model trained on 20,433 California districts estimates its median house value.</p>
+    </header>
+
+    <div class="grid">
+      <form id="form" class="card" novalidate>
+        <h2>District details</h2>
+
+        <fieldset>
+          <legend>Location</legend>
+          <label class="field">
+            <span>Quick pick a city</span>
+            <select id="city">
+              <option value="">Custom location</option>
+              <option value="37.77,-122.42,NEAR BAY">San Francisco</option>
+              <option value="37.34,-121.89,<1H OCEAN">San Jose</option>
+              <option value="34.05,-118.24,<1H OCEAN">Los Angeles</option>
+              <option value="32.72,-117.16,NEAR OCEAN">San Diego</option>
+              <option value="38.58,-121.49,INLAND">Sacramento</option>
+              <option value="36.74,-119.79,INLAND">Fresno</option>
+            </select>
+          </label>
+          <div class="row">
+            <label class="field">
+              <span>Latitude</span>
+              <input type="number" id="latitude" step="0.01" min="32.54" max="41.95" value="34.05" required>
+            </label>
+            <label class="field">
+              <span>Longitude</span>
+              <input type="number" id="longitude" step="0.01" min="-124.35" max="-114.31" value="-118.24" required>
+            </label>
+          </div>
+          <label class="field">
+            <span>Distance from the ocean</span>
+            <select id="ocean_proximity" required>
+              <option value="<1H OCEAN" selected>Less than 1 hour from ocean</option>
+              <option value="NEAR OCEAN">Near ocean</option>
+              <option value="NEAR BAY">Near bay</option>
+              <option value="INLAND">Inland</option>
+              <option value="ISLAND">Island</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Neighbourhood</legend>
+          <label class="field">
+            <span>Median income <output id="income_out">$38,700</output></span>
+            <input type="range" id="median_income" min="0.5" max="15" step="0.1" value="3.9">
+            <small>In tens of thousands of dollars (3.9 = $39,000 a year).</small>
+          </label>
+          <label class="field">
+            <span>Median house age <output id="age_out">29 years</output></span>
+            <input type="range" id="housing_median_age" min="1" max="52" step="1" value="29">
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Size of the district</legend>
+          <div class="row">
+            <label class="field">
+              <span>Total rooms</span>
+              <input type="number" id="total_rooms" min="1" max="40000" value="2600" required>
+            </label>
+            <label class="field">
+              <span>Total bedrooms</span>
+              <input type="number" id="total_bedrooms" min="1" max="7000" value="540" required>
+            </label>
+          </div>
+          <div class="row">
+            <label class="field">
+              <span>Population</span>
+              <input type="number" id="population" min="1" max="40000" value="1400" required>
+            </label>
+            <label class="field">
+              <span>Households</span>
+              <input type="number" id="households" min="1" max="7000" value="500" required>
+            </label>
+          </div>
+        </fieldset>
+
+        <p id="error" class="error" role="alert" hidden></p>
+
+        <div class="actions">
+          <button type="submit" id="submit" class="btn primary">Predict price</button>
+          <button type="button" id="reset" class="btn">Reset</button>
+        </div>
+      </form>
+
+      <aside class="card result" aria-live="polite">
+        <h2>Estimated median house value</h2>
+        <div id="empty" class="empty">
+          <p>Fill in the details and press <strong>Predict price</strong>.</p>
+        </div>
+        <div id="output" hidden>
+          <p id="price" class="price">$0</p>
+          <p id="range" class="range"></p>
+          <p id="cap" class="note" hidden>This is close to the $500,000 cap in the data, so the real value could be higher.</p>
+        </div>
+        <dl class="stats">
+          <div><dt>Typical error (RMSE)</dt><dd>±$48,690</dd></div>
+          <div><dt>R² on unseen data</dt><dd>0.827</dd></div>
+        </dl>
+        <p class="note">The data is from the 1990 US census, so prices are 1990-era values, not today's market. Use this as a learning project, not for real decisions.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+const $ = (id) => document.getElementById(id);
+
+const form = $("form");
+const submitBtn = $("submit");
+const errorBox = $("error");
+
+const NUMBER_FIELDS = [
+  "longitude", "latitude", "housing_median_age", "total_rooms",
+  "total_bedrooms", "population", "households", "median_income",
+];
+const ALL_FIELDS = [...NUMBER_FIELDS, "ocean_proximity"];
+
+const money = new Intl.NumberFormat("en-US", {
+  style: "currency", currency: "USD", maximumFractionDigits: 0,
+});
+
+// Remember the starting values so Reset can restore them
+const defaults = {};
+ALL_FIELDS.forEach((id) => (defaults[id] = $(id).value));
+
+function updateLabels() {
+  $("income_out").textContent = money.format(parseFloat($("median_income").value) * 10000);
+  $("age_out").textContent = `${$("housing_median_age").value} years`;
+}
+$("median_income").addEventListener("input", updateLabels);
+$("housing_median_age").addEventListener("input", updateLabels);
+
+// City quick-pick fills latitude, longitude and ocean proximity
+$("city").addEventListener("change", (e) => {
+  if (!e.target.value) return;
+  const [lat, lon, ocean] = e.target.value.split(",");
+  $("latitude").value = lat;
+  $("longitude").value = lon;
+  $("ocean_proximity").value = ocean;
+});
+
+function showError(message) {
+  errorBox.textContent = message;
+  errorBox.hidden = false;
+}
+function clearError() {
+  errorBox.hidden = true;
+  NUMBER_FIELDS.forEach((id) => $(id).classList.remove("invalid"));
+}
+
+// Count-up animation for the price
+function animatePrice(target) {
+  const el = $("price");
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = money.format(target);
+    return;
+  }
+  const start = performance.now();
+  const duration = 600;
+  function frame(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = money.format(target * eased);
+    if (t < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearError();
+
+  // Client-side check so the user gets instant feedback
+  for (const id of NUMBER_FIELDS) {
+    const input = $(id);
+    const value = parseFloat(input.value);
+    const min = parseFloat(input.min);
+    const max = parseFloat(input.max);
+    if (input.value === "" || Number.isNaN(value) || value < min || value > max) {
+      input.classList.add("invalid");
+      input.focus();
+      showError(`Enter a value between ${min} and ${max} for "${input.closest("label").querySelector("span").firstChild.textContent.trim()}".`);
+      return;
+    }
+  }
+
+  const payload = {};
+  ALL_FIELDS.forEach((id) => (payload[id] = $(id).value));
+  NUMBER_FIELDS.forEach((id) => (payload[id] = parseFloat(payload[id])));
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Predicting...";
+
+  try {
+    const res = await fetch("/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showError(data.error || "Something went wrong. Please try again.");
+      return;
+    }
+
+    $("empty").hidden = true;
+    $("output").hidden = false;
+    animatePrice(data.price);
+    $("range").textContent = `Likely range: ${money.format(data.low)} to ${money.format(data.high)}`;
+    $("cap").hidden = data.price < 480000;
+  } catch (err) {
+    showError(
+      window.location.protocol === "file:"
+        ? "Open this page through the server (python app.py, then http://127.0.0.1:5000), not by double-clicking the file."
+        : "Could not reach the server. Is app.py still running?"
+    );
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Predict price";
+  }
+});
+
+$("reset").addEventListener("click", () => {
+  ALL_FIELDS.forEach((id) => ($(id).value = defaults[id]));
+  $("city").value = "";
+  clearError();
+  updateLabels();
+  $("output").hidden = true;
+  $("empty").hidden = false;
+});
+
+updateLabels();
+</script>
+</body>
+</html>
